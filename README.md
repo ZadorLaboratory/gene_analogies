@@ -3,6 +3,13 @@
 
 ## Installation
 
+Clone this environment:
+
+```bash
+git clone https://github.com/ZadorLaboratory/gene_analogies.git
+cd gene_analogies
+```
+
 Install micromamba for package management:
 
 ```bash
@@ -40,9 +47,15 @@ The results are best viewed by opening the output file (called `output.md`) in a
 |--------|--------|---|--------|--------|------------|
 | [ENSG00000149591](https://www.proteinatlas.org/ENSG00000149591) | [ENSG00000101473](https://www.proteinatlas.org/ENSG00000101473) | ≈ | [ENSG00000107796](https://www.proteinatlas.org/ENSG00000107796) | [ENSG00000171135](https://www.proteinatlas.org/ENSG00000171135) | 0.5397 |
 | transgelin [Source:HGNC Symbol;Acc:HGNC:11553] | acyl-CoA thioesterase 8 [Source:HGNC Symbol;Acc:HGNC:15919] | | actin alpha 2, smooth muscle [Source:HGNC Symbol;Acc:HGNC:130] | jagunal homolog 1 [Source:HGNC Symbol;Acc:HGNC:26926] | |
-| [ENSG00000149591](https://www.proteinatlas.org/ENSG00000149591) | [ENSG00000161677](https://www.proteinatlas.org/ENSG00000161677) | ≈ | [ENSG00000107796](https://www.proteinatlas.org/ENSG00000107796) | [ENSG00000171135](https://www.proteinatlas.org/ENSG00000171135) | 0.5310 |
-| transgelin [Source:HGNC Symbol;Acc:HGNC:11553] | Josephin domain containing 2 [Source:HGNC Symbol;Acc:HGNC:28853] | | actin alpha 2, smooth muscle [Source:HGNC Symbol;Acc:HGNC:130] | jagunal homolog 1 [Source:HGNC Symbol;Acc:HGNC:26926] | |
-| [ENSG00000149591](https://www.proteinatlas.org/ENSG00000149591) | [ENSG00000105618](https://www.proteinatlas.org/ENSG00000105618) | ≈ | [ENSG00000107796](https://www.proteinatlas.org/ENSG00000107796) | [ENSG00000171135](https://www.proteinatlas.org/ENSG00000171135) | 0.5303 |
-| transgelin [Source:HGNC Symbol;Acc:HGNC:11553] | pre-mRNA processing factor 31 [Source:HGNC Symbol;Acc:HGNC:15446] | | actin alpha 2, smooth muscle [Source:HGNC Symbol;Acc:HGNC:130] | jagunal homolog 1 [Source:HGNC Symbol;Acc:HGNC:26926] | |
 
-## 
+## Data
+
+The index file loaded by this script is a few hundred GB in size, and is not included in this repository. Currently it must be specified by absolute path in the `--index-file` argument. 
+
+## Word2Vec analogies
+
+To perform that same operation with Word2Vec embeddings, use the following command:
+
+```bash
+...
+```

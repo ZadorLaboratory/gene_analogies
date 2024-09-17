@@ -153,7 +153,8 @@ def main(args):
             similar_pairs = search_similar_pairs(index, M, words, (word1, word2),
                                                  args.topk, use_cosine, args.difference)
             print_and_save_results(similar_pairs, word1, word2, args.topk, args.output_file, args.difference)
-            write_markdown_results(similar_pairs, word1, word2, args.topk, "outputs.md", args.difference, gene_descriptions)
+            if args.embeddings == "geneformer":
+                write_markdown_results(similar_pairs, word1, word2, args.topk, "outputs.md", args.difference, gene_descriptions)
         except ValueError as e:
             print(f"Error: {e}")
             sys.exit(1)
@@ -169,7 +170,8 @@ def main(args):
                 similar_pairs = search_similar_pairs(index, M, words, (word1, word2),
                                                      args.topk, use_cosine, args.difference)
                 print_results(similar_pairs, word1, word2, args.topk, args.difference)
-                write_markdown_results(similar_pairs, word1, word2, args.topk, "outputs.md", args.difference, gene_descriptions)
+                if args.embeddings == "geneformer":
+                    write_markdown_results(similar_pairs, word1, word2, args.topk, "outputs.md", args.difference, gene_descriptions)
                 print("\nResults also saved to outputs.md")
             except ValueError as e:
                 print(f"Error: {e}")
