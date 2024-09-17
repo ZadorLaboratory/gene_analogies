@@ -96,7 +96,7 @@ def search_similar_pairs(index, M: np.ndarray, words: List[str], query_pair: Tup
 
 
 def load_gene_descriptions():
-    with open("../data/geneformer/gene_descriptions.json", "r") as f:
+    with open("data/geneformer/gene_descriptions.json", "r") as f:
         return json.load(f)
 
 def write_markdown_results(similar_pairs, word1, word2, topk, output_file, take_difference, gene_descriptions):
