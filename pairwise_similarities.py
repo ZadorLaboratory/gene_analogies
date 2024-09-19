@@ -4,8 +4,7 @@ import argparse
 import sys
 import json
 import matplotlib.pyplot as plt
-from io import BytesIO
-import base64
+import os
 sys.path.append("../")  # Add parent directory to Python path
 from data.dataloaders import load_geneformer_embeddings, load_word2vec_embeddings
 from tqdm import tqdm
@@ -51,29 +50,26 @@ def load_gene_descriptions():
     with open("data/geneformer/gene_descriptions.json", "r") as f:
         return json.load(f)
 
-def create_histogram(similarities):
+def create_histogram(similarities, output_dir):
     print("Creating histogram...")
-    # Subsample to 100k points
     subsample = np.random.choice(similarities.flatten(), size=100000, replace=False)
     
-    plt.figure(figsize=(6, 3))
+    plt.figure(figsize=(5, 3))
     plt.hist(subsample, bins=50, edgecolor='black')
     plt.title('Distribution of Similarities')
     plt.xlabel('Similarity')
     plt.ylabel('Frequency')
     plt.tight_layout()
+
+    # Create figures directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
     
-    # Save plot to a BytesIO object
-    buf = BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    
-    # Encode the image to base64
-    image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    # Save plot as PNG file
+    histogram_path = os.path.join(output_dir, 'similarity_histogram.png')
+    plt.savefig(histogram_path)
     plt.close()
     
-    return image_base64
-
+    return histogram_path
 
 def write_markdown_results(pairs, words, topk, output_file, use_cosine, gene_descriptions, similarities, embeddings_type):
     similarity_type = "Cosine similarity" if use_cosine else "Negative Euclidean distance"
@@ -85,18 +81,11 @@ def write_markdown_results(pairs, words, topk, output_file, use_cosine, gene_des
     sim_max = np.max(similarities)
     
     # Create histogram
-    histogram_base64 = create_histogram(similarities)
+    output_dir = os.path.dirname(output_file)
+    histogram_path = create_histogram(similarities, os.path.join(output_dir, 'figures'))
     
     with open(output_file, 'w') as f:
         f.write(f"# Similarity Analysis of {embeddings_type.capitalize()} Embeddings\n\n")
-        
-        f.write("This analysis explores the pairwise similarities between gene embeddings generated using the "
-                f"{embeddings_type} model. Gene embeddings are vector representations of genes that capture their "
-                "functional and relational properties in a high-dimensional space.\n\n")
-        
-        f.write(f"We use {similarity_type} as our measure of similarity between gene embeddings. "
-                f"For each pair of genes, we calculate their similarity score, resulting in a "
-                f"similarity matrix of size {len(words)} x {len(words)}.\n\n")
         
         f.write(f"## Distribution Summary\n\n")
         f.write(f"Similarity measure: {similarity_type}\n\n")
@@ -106,7 +95,7 @@ def write_markdown_results(pairs, words, topk, output_file, use_cosine, gene_des
         f.write(f"- Maximum: {sim_max:.6f}\n\n")
         
         f.write("## Similarity Distribution Histogram\n\n")
-        f.write(f"![Similarity Distribution](data:image/png;base64,{histogram_base64})\n\n")
+        f.write(f"![Similarity Distribution](figures/similarity_histogram.png)\n\n")
         
         f.write(f"## Top {topk} Most Similar Pairs\n\n")
         f.write("| Gene 1 | Gene 2 | Similarity |\n")
@@ -116,7 +105,6 @@ def write_markdown_results(pairs, words, topk, output_file, use_cosine, gene_des
             w1, w2 = words[i], words[j]
             f.write(f"| [{w1}](https://www.proteinatlas.org/{w1}) | [{w2}](https://www.proteinatlas.org/{w2}) | {similarity:.6f} |\n")
             f.write(f"| {gene_descriptions.get(w1, 'N/A')} | {gene_descriptions.get(w2, 'N/A')} | |\n")
-
 
 def main(args):
     print("-"*50)
@@ -146,21 +134,25 @@ def main(args):
     # Find top N pairs
     top_pairs = find_top_n_pairs(similarities, args.topk)
 
+    # Create outputs directory if it doesn't exist
+    os.makedirs("outputs", exist_ok=True)
+
     # Save results
-    save_results(top_pairs, words, args.output_file)
-    print(f"\nResults saved to {args.output_file}")
+    save_results(top_pairs, words, os.path.join("outputs", args.output_file))
+    print(f"\nResults saved to outputs/{args.output_file}")
 
     # If using geneformer embeddings, also save markdown results
     if args.embeddings == "geneformer":
         gene_descriptions = load_gene_descriptions()
-        write_markdown_results(top_pairs, words, args.topk, "outputs.md", args.use_cosine, gene_descriptions, similarities, args.embeddings)
-        print("\nDetailed results saved to outputs.md")
+        markdown_file = os.path.join("outputs", "most_similar_embeddings.md")
+        write_markdown_results(top_pairs, words, args.topk, markdown_file, args.use_cosine, gene_descriptions, similarities, args.embeddings)
+        print("\nDetailed results saved to outputs/most_similar_embeddings.md")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Find top N similar pairs of embeddings")
     parser.add_argument("--embeddings", type=str, default="word2vec", help="Embeddings to use (geneformer or word2vec)")
     parser.add_argument("--path", type=str, required=True, help="Path to embeddings")
-    parser.add_argument("--topk", type=int, default=1000, help="Number of top pairs to return")
+    parser.add_argument("--topk", type=int, default=10, help="Number of top pairs to return")
     parser.add_argument("--output-file", type=str, default="top_pairs.txt", help="File to save the results")
     parser.add_argument("--use-cosine", action="store_true", help="Use cosine similarity (default is Euclidean distance)")
     parser.add_argument("--truncate", type=int, default=0, help="Truncate to first N words (0 means no truncation)")
