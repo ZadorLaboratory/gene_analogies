@@ -7,6 +7,6 @@ if [ -z "$env_exists" ]; then
     micromamba create -y --name $ENV_NAME 
 fi
 micromamba install -y -n $ENV_NAME python=3.11 jupyter -c conda-forge
-micromamba install -y -n $ENV_NAME numpy anndata pandas seaborn tqdm -c conda-forge
+micromamba install -y -n $ENV_NAME numpy anndata pandas scikit-learn seaborn tqdm -c conda-forge
 micromamba install -y -n $ENV_NAME -c pytorch -c nvidia faiss-gpu=1.8.0
 micromamba activate $ENV_NAME
