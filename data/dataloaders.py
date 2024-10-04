@@ -4,14 +4,18 @@ import json
 
 def load_geneformer_embeddings(path, reordered=True, brain=True):
     if brain:
-        path = os.path.join(path, "geneformer", "gene_embeddings_ordered_brain.json")
-    elif reordered:
-        path = os.path.join(path, "geneformer", "gene_embeddings_ordered.json")
+        path = os.path.join(path, "geneformer", "gene_embeddings_ordered_brain.npz")
+        files = np.load(path)
+        embeddings = files["embeddings"]
+        all_genes = files["genes"]
     else:
-        path = os.path.join(path, "geneformer", "gene_embeddings_big.json")
-    embeddings_dict = json.load(open(path))
-    all_genes = list(embeddings_dict.keys())
-    embeddings = np.array([embeddings_dict[gene] for gene in all_genes])
+        if reordered:
+            path = os.path.join(path, "geneformer", "gene_embeddings_ordered.json")
+        else:
+            path = os.path.join(path, "geneformer", "gene_embeddings_big.json")
+        embeddings_dict = json.load(open(path))
+        all_genes = list(embeddings_dict.keys())
+        embeddings = np.array([embeddings_dict[gene] for gene in all_genes])
     return np.array(embeddings), list(all_genes)
 
 def load_word2vec_embeddings(path, first_30k=True):
