@@ -84,7 +84,7 @@ def find_analogies(query_word: str, M: np.ndarray, words: List[str], index: fais
         faiss.normalize_L2(M)
     
     # Perform the search
-    D, I = index.search(diff_vectors, 1000)  # 
+    D, I = index.search(diff_vectors, 5196)  # For each difference vector, find the top 2048 nearest neighbors. We need a lot since we'll throw out a lot soon.
 
     results = []
     triu_indices = np.triu_indices(len(words), 1)
@@ -138,7 +138,7 @@ def cluster_and_visualize(analogies: List[Tuple], M: np.ndarray, words: List[str
     sorted_labels = cluster_labels[sorted_indices]
     
     # Create heatmap
-    plt.figure(figsize=(5, 3))
+    plt.figure(figsize=(12, 8))
     ax = sns.heatmap(sorted_similarities, cmap='viridis', cbar_kws={'label': 'Cosine Similarity'})
     
     # Add cluster separators and labels
@@ -151,7 +151,7 @@ def cluster_and_visualize(analogies: List[Tuple], M: np.ndarray, words: List[str
             ax.axvline(x=current_tick, color='red', linewidth=2)
             
             # Add cluster label
-            plt.text(len(sorted_indices)+.25, current_tick + cluster_size/2, f'Cluster {cluster}', 
+            plt.text(len(sorted_indices)+.45, current_tick + cluster_size/2, f'Cluster {cluster}', 
                      verticalalignment='center', horizontalalignment='right',
                      rotation=270, fontsize=10, fontweight='bold')
             
@@ -164,7 +164,7 @@ def cluster_and_visualize(analogies: List[Tuple], M: np.ndarray, words: List[str
         ticklabels.append(f"{a}:{b}::{c}:{d}")
     # Set yticks and rotate labels
     ax.set_yticks(np.arange(len(sorted_indices)) + 0.5)
-    ax.set_yticklabels(ticklabels, rotation=0, ha='right', fontsize=8)
+    ax.set_yticklabels(ticklabels, rotation=0, ha='right', fontsize=10)
 
     # Add a final line at the bottom/right
     ax.axhline(y=len(sorted_labels), color='red', linewidth=2)
@@ -173,24 +173,21 @@ def cluster_and_visualize(analogies: List[Tuple], M: np.ndarray, words: List[str
     plt.xlabel('Analogy Index')
     plt.ylabel('Analogy Index')
     
-    # Adjust layout to prevent cutting off labels
-    plt.tight_layout()
-    
     # Save the plot to a BytesIO object instead of a file
+    fig_width, fig_height = 700,400
     img_buffer = BytesIO()
-    plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+    plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
     img_buffer.seek(0)
     
     # Encode the image as base64
     img_str = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
     
-    # Create the Markdown-embedded image string
-    img_markdown = f"![A-B Vector Similarities Heatmap](data:image/png;base64,{img_str})"
+    # Create the Markdown-embedded image string with specified width and height
+    img_markdown = f'<img src="data:image/png;base64,{img_str}" alt="A-B Vector Similarities Heatmap" width="{fig_width}" height="{fig_height}">'
     
     plt.close()
     
     return cluster_labels, img_markdown
-
 def interactive_mode(M: np.ndarray, words: List[str], index: faiss.Index, gene_descriptions: dict, embeddings_type: str, topk: int = 10,
                      use_cosine: bool = False, vector_sum: bool = False): 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -213,13 +210,17 @@ def interactive_mode(M: np.ndarray, words: List[str], index: faiss.Index, gene_d
         
         try:
             analogies = find_analogies(query_word, M, words, index, topk, use_cosine, vector_sum, float(threshold))
-            
-            # Perform clustering and visualization
-            cluster_labels, img_markdown = cluster_and_visualize(analogies, M, words)
-            
         except ValueError:
             print(f"Word '{query_word}' not found in the vocabulary.")
-            continue
+            
+        try:
+            # Perform clustering and visualization
+            cluster_labels, img_markdown = cluster_and_visualize(analogies, M, words)
+        except Exception as e:
+            print(f"Error during clustering/visualization: {e}")
+            cluster_labels = None
+            img_markdown = ""
+
         
         with open(output_file, 'a') as f:
             if not analogies:
@@ -228,7 +229,7 @@ def interactive_mode(M: np.ndarray, words: List[str], index: faiss.Index, gene_d
             else:
                 query_description = gene_descriptions.get(query_word, 'N/A').split(" [Source")[0]
                 print(f"\n\nTop {len(analogies)} analogies for {query_word} ({query_description}):\n")
-                f.write(f"Using an A/C and B/D similarity limit of {threshold}\n")
+                f.write(f"\nUsing an A/C and B/D similarity limit of {threshold}\n")
                 f.write(f"## Top {len(analogies)} analogies for [{query_word}](https://www.proteinatlas.org/{query_word}) ({query_description}):\n\n")
                 f.write(f"{img_markdown}\n\n")  # Embed the image directly in the Markdown file
                 f.write("| Analogy | Score | Cluster | Description A | Description B | Description C | Description D |\n")
