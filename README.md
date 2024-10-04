@@ -78,7 +78,23 @@ For example, take the gene [Syntaxin-1A](https://www.proteinatlas.org/ENSG000001
 >| [ENSG00000184545](https://www.proteinatlas.org/ENSG00000184545) | 0.914299 | dual specificity phosphatase 8 |
 >| [ENSG00000197044](https://www.proteinatlas.org/ENSG00000197044) | 0.910157 | zinc finger protein 441 |
 
-### Analogies
+## Analogies
+
+Words, like genes, have multiple meanings. If genes are pleitropic, words are polysemantic. For example, the word "king" can refer to a monarch, a chess piece, or a playing card. The word "queen" can refer to a monarch, a chess piece, or a playing card. One way we can interrogate the meaning of a word is by analogy. For example, the analogy "king is to queen as man is to woman" captures the gendered relationship between the two pairs of words.
+
+A famous property of word embedding space is the way in which they recapitulate these analogies. For example, the vector resulting from the subtraction of the vector for "king" from the vector for "queen" is very similar to the vector resulting from the subtraction of the vector for "man" from the vector for "woman.
+
+We can query these analogies in two ways: by specifiying a pair of words and then searching for the closest pair of words, or by specifying a single word and then searching for the 3 words that comples the analogy.
+
+### Querying a single gene
+
+The `query_single_gene` script searches for the best analogies that contain a single gene. To run this in an interactive mode, use the following command:
+
+```bash
+python query_single_gene.py --index-file  "/home/benjami/gene_analogies/data/geneformer/brain_diff_cosine_20k_index.faiss" --truncate 20000 --path "/home/benjami/gene_analogies/data/" --use-cosine --cpu-only --topk 100 --embeddings geneformer
+```
+
+### Querying a pair of genes
 
 The `query_similar_pairs` script will generate analogies by searching for the closest vector in the embedding space to the vector resulting from the subtraction of two other vectors. The script will output the top N closest vectors to the resulting vector.
 
@@ -107,10 +123,12 @@ The results are best viewed by opening the output file (called `output.md`) in a
 
 The index file loaded by this script is a few hundred GB in size, and is not included in this repository. Currently it must be specified by absolute path in the `--index-file` argument. 
 
-## Word2Vec analogies
+## Using Word2Vec
 
-To perform that same operation with Word2Vec embeddings, use the following command:
+All of these scripts can equally well as be applied to any embedding vector, including word2vec embeddings. To do this, simply specify the path to the word2vec embeddings in the `--embeddings` argument. For example, to query the word2vec embeddings for the word "king", use the following command:
 
 ```bash
-...
+python query_similar_pairs.py --index-file "/home/benjami/gene_analogies/data/word2vec/word2vec_cosine_20k_index.faiss" --truncate 20000 --difference --path "/home/benjami/gene_analogies/data/" --use-cosine --cpu-only --embeddings word2vec
 ```
+
+The `truncate` flag is important to specify for word2vec as there are over 600,000 words in the word2vec embeddings (and this is after cleaning to just real words). The `--truncate` flag will limit the number of words to the specified number, which will speed up the loading time of the index file.
