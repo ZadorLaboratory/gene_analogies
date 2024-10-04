@@ -124,16 +124,14 @@ def find_most_similar_genes(similarities, words, query_gene, top_k=10):
     
     return top_similar
 
-def interactive_mode(similarities, words, gene_descriptions, embeddings_type, use_cosine):
+def interactive_mode(similarities, words, gene_descriptions, embeddings_type, use_cosine, top_k=10):
     # Create a new markdown file for the interactive session
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = os.path.join("outputs", f"interactive_results_{timestamp}.md")
     
     with open(output_file, 'w') as f:
         f.write(f"# Interactive Gene Similarity Analysis\n\n")
-        f.write(f"Embeddings type: {embeddings_type}\n")
-        f.write(f"Similarity measure: {'Cosine similarity' if use_cosine else 'Negative Euclidean distance'}\n")
-        f.write(f"Date and time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        f.write(f"Using {embeddings_type} embeddings and {'Cosine similarity' if use_cosine else 'Negative Euclidean distance'}\n")
 
     print(f"Interactive session results will be saved to: {output_file}")
 
@@ -142,22 +140,23 @@ def interactive_mode(similarities, words, gene_descriptions, embeddings_type, us
         if query_gene.lower() == 'quit':
             break
         
-        result = find_most_similar_genes(similarities, words, query_gene)
+        result = find_most_similar_genes(similarities, words, query_gene, top_k)
         
         with open(output_file, 'a') as f:
             if result is None:
                 print(f"Gene '{query_gene}' not found in the dataset.")
                 f.write(f"\n## Query: {query_gene}\n\nGene not found in the dataset.\n")
             else:
-                print(f"\nTop 10 genes most similar to {query_gene}:")
-                f.write(f"\n## Query: {query_gene}\n\n")
+                query_gene_description = gene_descriptions.get(query_gene, 'N/A').split(" [Source")[0]
+                print(f"\nTop {len(result)} genes most similar to {query_gene} ({query_gene_description}):\n")
+                f.write(f"## Top {len(result)} genes most similar to [{query_gene}](https://www.proteinatlas.org/{query_gene}) ({query_gene_description}):\n\n")
                 f.write("| Gene | Similarity | Description |\n")
                 f.write("|------|------------|-------------|\n")
                 
                 print("| Gene | Similarity | Description |")
                 print("|------|------------|-------------|")
                 for gene, similarity in result:
-                    description = gene_descriptions.get(gene, 'N/A')
+                    description = gene_descriptions.get(gene, 'N/A').split(" [Source")[0]
                     print(f"| {gene} | {similarity:.6f} | {description} |")
                     f.write(f"| [{gene}](https://www.proteinatlas.org/{gene}) | {similarity:.6f} | {description} |\n")
 
@@ -195,7 +194,7 @@ def main(args):
 
     if args.interactive:
         gene_descriptions = load_gene_descriptions()
-        interactive_mode(similarities, words, gene_descriptions, args.embeddings, args.use_cosine)
+        interactive_mode(similarities, words, gene_descriptions, args.embeddings, args.use_cosine, args.topk)
     else:
         # Find top N pairs
         top_pairs = find_top_n_pairs(similarities, args.topk)
